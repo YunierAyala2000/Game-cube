@@ -622,6 +622,7 @@ let animationFrame = 0;
 
 let gridOffset = 0;
 let bgPulse = 0;
+let bgImage = null;
 
 function resize() {
     const containerWidth = window.innerWidth;
@@ -654,6 +655,9 @@ function init() {
     resize();
     player.x = CONFIG.CANVAS_WIDTH * 0.18;
     player.y = CONFIG.GROUND_Y - CONFIG.PLAYER_SIZE;
+
+    bgImage = new Image();
+    bgImage.src = 'public/Fondo1.png';
 
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', handleKeyUp);
@@ -1273,10 +1277,10 @@ function updateTitleScreen() {
 }
 
 function drawBackground() {
-    const bgColor = score >= 300 ? COLORS.BG2 : COLORS.BG;
-    const gridColor = score >= 300 ? COLORS.GRID2 : COLORS.GRID;
-
-    ctx.fillStyle = bgColor;
+    if (bgImage && bgImage.complete && bgImage.naturalWidth > 0) {
+        ctx.drawImage(bgImage, 0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+    }
+    ctx.fillStyle = score >= 300 ? 'rgba(10,0,15,0.6)' : 'rgba(5,5,10,0.5)';
     ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
 
     const time = performance.now() * 0.001;
@@ -1285,9 +1289,9 @@ function drawBackground() {
     const gridSize = 60;
     const perspectiveY = CONFIG.GROUND_Y;
 
-    ctx.strokeStyle = gridColor;
+    ctx.strokeStyle = COLORS.GRID;
     ctx.lineWidth = 1;
-    ctx.globalAlpha = 0.2 + bgPulse * 0.1;
+    ctx.globalAlpha = 0.25 + bgPulse * 0.1;
 
     for (let i = 0; i <= CONFIG.CANVAS_WIDTH / gridSize; i++) {
         const x = (i * gridSize - (gridOffset % gridSize) + gridSize) % (CONFIG.CANVAS_WIDTH + gridSize);
