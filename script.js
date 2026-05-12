@@ -545,7 +545,6 @@ let multiplier = 1;
 let obstaclesDodged = 0;
 let nearMissCount = 0;
 let obstacles = [];
-let obstaclesSinceLastDodge = 0;
 let gameSpeed = CONFIG.BASE_SPEED;
 let obstacleInterval = CONFIG.MAX_OBSTACLE_INTERVAL;
 let lastObstacleTime = 0;
@@ -693,7 +692,6 @@ function startGame() {
     obstaclesDodged = 0;
     nearMissCount = 0;
     obstacles = [];
-    obstaclesSinceLastDodge = 0;
     gameSpeed = CONFIG.BASE_SPEED;
     obstacleInterval = CONFIG.MAX_OBSTACLE_INTERVAL;
     lastObstacleTime = performance.now();
@@ -869,7 +867,6 @@ function updateObstacles(dt) {
 
         if (obs.x + obs.w < 0) {
             obstacles.splice(i, 1);
-            obstaclesSinceLastDodge++;
             continue;
         }
 
@@ -924,7 +921,6 @@ function updateObstacles(dt) {
 
                     combo++;
                     obstaclesDodged++;
-                    obstaclesSinceLastDodge = 0;
                     multiplier = Math.min(3, 1 + combo * 0.1);
                     maxCombo = Math.max(maxCombo, combo);
 
@@ -948,12 +944,15 @@ function updateObstacles(dt) {
         }
 
         if (!player.isDead && !obs.nearMissTriggered) {
-            const playerCenterY = player.y + player.height / 2;
-            const obsCenterY = obs.y + obs.h / 2;
-            const verticalDist = Math.abs(playerCenterY - obsCenterY);
-            const combinedHalfHeight = (player.height + obs.h) / 2;
+            const playerRight = player.x + player.width;
+            const playerBottom = player.y + player.height;
+            const obsRight = obs.x + obs.w;
+            const obsBottom = obs.y + obs.h;
 
-            if (verticalDist > combinedHalfHeight * 0.8) continue;
+            const horizontalOverlap = player.x < obsRight && playerRight > obs.x;
+            const verticalOverlap = player.y < obsBottom && playerBottom > obs.y;
+
+            if (!horizontalOverlap || !verticalOverlap) continue;
 
             let collision = false;
 
@@ -969,10 +968,7 @@ function updateObstacles(dt) {
                     break;
                 case 'square':
                 default:
-                    collision = player.x < obs.x + obs.w &&
-                              player.x + player.width > obs.x &&
-                              player.y < obs.y + obs.h &&
-                              player.y + player.height > obs.y;
+                    collision = true;
                     break;
             }
 
@@ -981,10 +977,6 @@ function updateObstacles(dt) {
                 return;
             }
         }
-    }
-
-    if (obstaclesSinceLastDodge >= 3 && !player.isDead) {
-        gameOver();
     }
 }
 
