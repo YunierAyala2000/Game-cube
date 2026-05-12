@@ -2,6 +2,11 @@
 
 A fast-paced, one-button arcade game with a cyberpunk synthwave aesthetic. Control a glowing neon cube as it dashes through an endless obstacle course.
 
+## Screenshots
+
+![Gameplay 1](public/1.png)
+![Gameplay 2](public/2.png)
+
 ## Quick Start
 
 **Option 1 - Direct:**
