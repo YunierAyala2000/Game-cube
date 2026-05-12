@@ -1278,7 +1278,10 @@ function updateTitleScreen() {
 
 function drawBackground() {
     if (bgImage && bgImage.complete && bgImage.naturalWidth > 0) {
+        ctx.save();
+        ctx.filter = 'blur(3px)';
         ctx.drawImage(bgImage, 0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+        ctx.restore();
     }
     ctx.fillStyle = score >= 300 ? 'rgba(10,0,15,0.6)' : 'rgba(5,5,10,0.5)';
     ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
