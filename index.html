@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Neon Dash</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game"></canvas>
+
+        <div id="ui-layer">
+            <div id="hud" class="hidden">
+                <div id="score-display">
+                    <span id="score">0</span>
+                </div>
+                <div id="combo-display">
+                    <span id="combo">0</span>
+                    <span id="multiplier">x1.0</span>
+                </div>
+            </div>
+
+            <div id="title-screen" class="screen">
+                <div class="title-content">
+                    <h1 class="game-title">
+                        <span class="title-neon">NEON</span>
+                        <span class="title-dash">DASH</span>
+                    </h1>
+                    <p class="subtitle">ONE BUTTON. INFINITE CHALLENGE.</p>
+                    <div class="best-score">
+                        <span class="label">BEST SCORE</span>
+                        <span id="title-best-score">0</span>
+                    </div>
+                    <div class="controls-hint">
+                        <p>SPACE / CLICK / TAP to jump</p>
+                    </div>
+                    <div class="start-prompt pulse">
+                        PRESS SPACE TO START
+                    </div>
+                    <div class="stats-preview">
+                        <span id="total-runs">0 runs</span>
+                        <span class="separator">|</span>
+                        <span id="longest-combo">Best: 0 combo</span>
+                    </div>
+                </div>
+                <div class="sound-toggle" id="sound-toggle">
+                    <span class="sound-icon">🔊</span>
+                    <span class="sound-text">SOUND</span>
+                </div>
+            </div>
+
+            <div id="game-over-screen" class="screen hidden">
+                <div class="gameover-content">
+                    <h2 class="gameover-title">GAME OVER</h2>
+                    <div class="final-score">
+                        <span class="label">SCORE</span>
+                        <span id="final-score">0</span>
+                    </div>
+                    <div class="best-score-display">
+                        <span class="label">BEST</span>
+                        <span id="final-best">0</span>
+                    </div>
+                    <div id="new-best" class="new-best hidden">
+                        <span class="pulse">NEW BEST!</span>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat">
+                            <span id="obstacles-dodged">0</span>
+                            <span class="stat-label">DODGED</span>
+                        </div>
+                        <div class="stat">
+                            <span id="max-combo">0</span>
+                            <span class="stat-label">MAX COMBO</span>
+                        </div>
+                        <div class="stat">
+                            <span id="near-misses">0</span>
+                            <span class="stat-label">NEAR MISS</span>
+                        </div>
+                    </div>
+                    <div id="medal-display" class="medal-display">
+                        <span id="medal" class="medal"></span>
+                    </div>
+                    <div class="restart-prompt pulse">
+                        PRESS SPACE TO RETRY
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="flash-overlay"></div>
+        <div id="combo-flash" class="hidden"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
