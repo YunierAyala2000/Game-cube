@@ -55,6 +55,9 @@ const MEDALS = {
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 let audioEnabled = true;
+let bgMusicStarted = false;
+let bgMusicGain = null;
+let bgMusicOscillators = [];
 
 const Storage = {
     save(data) {
@@ -245,7 +248,78 @@ const Audio = {
         audioEnabled = !audioEnabled;
         stored.soundEnabled = audioEnabled;
         Storage.save(stored);
+        if (!audioEnabled && bgMusicGain) {
+            bgMusicGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        } else if (audioEnabled && bgMusicGain && gameState === 'playing') {
+            bgMusicGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        }
         return audioEnabled;
+    },
+    startBgMusic() {
+        if (bgMusicStarted || !audioEnabled) return;
+        bgMusicStarted = true;
+
+        const masterGain = audioCtx.createGain();
+        masterGain.connect(audioCtx.destination);
+        masterGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        bgMusicGain = masterGain;
+
+        const bassNotes = [65.41, 82.41, 73.42, 98.00];
+        const melodyNotes = [261.63, 329.63, 392.00, 523.25, 440.00, 349.23, 293.66, 261.63];
+
+        const playBass = (noteIndex, delay) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(bassNotes[noteIndex % bassNotes.length], audioCtx.currentTime + delay);
+            gain.gain.setValueAtTime(0, audioCtx.currentTime + delay);
+            gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + delay + 0.05);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime + delay + 0.4);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.8);
+            osc.start(audioCtx.currentTime + delay);
+            osc.stop(audioCtx.currentTime + delay + 0.8);
+        };
+
+        const playMelody = (noteIndex, delay) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(masterGain);
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(melodyNotes[noteIndex % melodyNotes.length], audioCtx.currentTime + delay);
+            gain.gain.setValueAtTime(0, audioCtx.currentTime + delay);
+            gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + delay + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.4);
+            osc.start(audioCtx.currentTime + delay);
+            osc.stop(audioCtx.currentTime + delay + 0.4);
+        };
+
+        const loopBgMusic = () => {
+            if (gameState !== 'playing' || !audioEnabled) {
+                if (masterGain) masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+                return;
+            }
+
+            const now = audioCtx.currentTime;
+            for (let i = 0; i < 16; i++) {
+                playBass(i, i * 0.5);
+            }
+            for (let i = 0; i < 32; i++) {
+                playMelody(i, i * 0.25);
+            }
+
+            setTimeout(loopBgMusic, 8000);
+        };
+
+        loopBgMusic();
+    },
+    stopBgMusic() {
+        bgMusicStarted = false;
+        if (bgMusicGain) {
+            bgMusicGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        }
     }
 };
 
@@ -656,6 +730,8 @@ function startGame() {
     if (audioCtx.state === 'suspended') {
         audioCtx.resume();
     }
+
+    Audio.startBgMusic();
 }
 
 function jump() {
@@ -872,6 +948,13 @@ function updateObstacles(dt) {
         }
 
         if (!player.isDead && !obs.nearMissTriggered) {
+            const playerCenterY = player.y + player.height / 2;
+            const obsCenterY = obs.y + obs.h / 2;
+            const verticalDist = Math.abs(playerCenterY - obsCenterY);
+            const combinedHalfHeight = (player.height + obs.h) / 2;
+
+            if (verticalDist > combinedHalfHeight * 0.8) continue;
+
             let collision = false;
 
             switch (obs.shape) {
@@ -980,6 +1063,8 @@ function gameOver() {
     player.isDead = true;
     player.vy = -8;
     gameState = 'gameover';
+
+    Audio.stopBgMusic();
 
     Audio.play('death');
     triggerFlash('red');
