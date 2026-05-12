@@ -36,6 +36,8 @@ const COLORS = {
     WHITE: '#ffffff',
     BG: '#0a0a12',
     GRID: '#1a1a2e',
+    BG2: '#12000a',
+    GRID2: '#3e0020',
 };
 
 const THEMES = {
@@ -524,6 +526,33 @@ const patterns = {
         h: PATTERN_WIDE_SIZE * 1.3,
         shape: 'triangle'
     }],
+
+    aerial: (groundY) => [{
+        x: CONFIG.CANVAS_WIDTH + 50,
+        y: groundY - PATTERN_SIZE * 4 - Math.random() * PATTERN_SIZE * 2,
+        w: PATTERN_SIZE,
+        h: PATTERN_SIZE,
+        shape: 'square'
+    }],
+
+    dangler: (groundY) => [{
+        x: CONFIG.CANVAS_WIDTH + 50,
+        y: 20,
+        w: PATTERN_SIZE,
+        h: Math.random() * 60 + 40,
+        shape: 'square'
+    }],
+
+    flyerPair: (groundY) => [
+        { x: CONFIG.CANVAS_WIDTH + 50, y: groundY - PATTERN_SIZE * 3, w: PATTERN_SIZE, h: PATTERN_SIZE * 0.6, shape: 'circle' },
+        { x: CONFIG.CANVAS_WIDTH + 50, y: groundY - PATTERN_SIZE * 5, w: PATTERN_SIZE, h: PATTERN_SIZE * 0.6, shape: 'circle' }
+    ],
+
+    zigzag: (groundY) => [
+        { x: CONFIG.CANVAS_WIDTH + 50, y: groundY - PATTERN_SIZE * 2.5, w: PATTERN_SIZE, h: PATTERN_SIZE * 0.5, shape: 'triangle' },
+        { x: CONFIG.CANVAS_WIDTH + 60, y: groundY - PATTERN_SIZE * 3.5, w: PATTERN_SIZE, h: PATTERN_SIZE * 0.5, shape: 'triangle' },
+        { x: CONFIG.CANVAS_WIDTH + 70, y: groundY - PATTERN_SIZE * 4.5, w: PATTERN_SIZE, h: PATTERN_SIZE * 0.5, shape: 'triangle' }
+    ],
 };
 
 const patternList = [
@@ -531,7 +560,8 @@ const patternList = [
     'doubleStack', 'spikeStack', 'mixedStack',
     'tripleWave', 'spikeWave',
     'gap', 'corridor', 'corridorSpike',
-    'spikeCluster', 'wide', 'wideTriangle'
+    'spikeCluster', 'wide', 'wideTriangle',
+    'aerial', 'dangler', 'flyerPair', 'zigzag',
 ];
 
 const canvas = document.getElementById('game');
@@ -561,6 +591,7 @@ let shakeX = 0;
 let shakeY = 0;
 let lastComboMilestone = 0;
 let comboMilestones = [10, 25, 50, 100];
+let bgPhase = 0;
 
 const player = {
     x: 0,
@@ -769,6 +800,23 @@ function jump() {
     });
 }
 
+function variantSize(obs) {
+    const scale = 0.6 + Math.random() * 0.9;
+    obs.w = Math.round(obs.w * scale);
+    obs.h = Math.round(obs.h * (0.7 + Math.random() * 0.8));
+    if (obs.w < 10) obs.w = 10;
+    if (obs.h < 10) obs.h = 10;
+    return obs;
+}
+
+function variantShape(obs) {
+    const shapes = ['square', 'triangle', 'diamond', 'circle'];
+    if (Math.random() < 0.3) {
+        obs.shape = shapes[Math.floor(Math.random() * shapes.length)];
+    }
+    return obs;
+}
+
 function spawnObstacle() {
     const elapsed = performance.now() - gameStartTime;
     const groundY = CONFIG.GROUND_Y;
@@ -784,11 +832,11 @@ function spawnObstacle() {
         if (intenseWaveCount === 5) {
             const pattern = Math.random() < 0.5 ? 'single' : 'gap';
             const obs = patterns[pattern](groundY);
-            obstacles.push(...obs.map(o => ({ ...o, id: Math.random(), nearMissTriggered: false })));
+            obstacles.push(...obs.map(o => variantShape(variantSize({ ...o, id: Math.random(), nearMissTriggered: false }))));
             intenseWaveCount--;
         } else if (intenseWaveCount > 0) {
             const obs = patterns.single(groundY);
-            obstacles.push(...obs.map(o => ({ ...o, id: Math.random(), nearMissTriggered: false })));
+            obstacles.push(...obs.map(o => variantShape(variantSize({ ...o, id: Math.random(), nearMissTriggered: false }))));
             intenseWaveCount--;
         }
         return;
@@ -797,17 +845,17 @@ function spawnObstacle() {
     }
 
     let patternIndex;
-    if (elapsed < 30000) {
-        patternIndex = Math.floor(Math.random() * 3);
-    } else if (elapsed < 60000) {
-        patternIndex = Math.floor(Math.random() * 5);
+    if (elapsed < 15000) {
+        patternIndex = Math.floor(Math.random() * 7);
+    } else if (elapsed < 30000) {
+        patternIndex = Math.floor(Math.random() * 12);
     } else {
         patternIndex = Math.floor(Math.random() * patternList.length);
     }
 
     const patternName = patternList[patternIndex];
     const newObstacles = patterns[patternName](groundY);
-    obstacles.push(...newObstacles.map(o => ({ ...o, id: Math.random(), nearMissTriggered: false })));
+    obstacles.push(...newObstacles.map(o => variantShape(variantSize({ ...o, id: Math.random(), nearMissTriggered: false }))));
 }
 
 function updatePlayer(dt) {
@@ -1225,7 +1273,10 @@ function updateTitleScreen() {
 }
 
 function drawBackground() {
-    ctx.fillStyle = COLORS.BG;
+    const bgColor = score >= 300 ? COLORS.BG2 : COLORS.BG;
+    const gridColor = score >= 300 ? COLORS.GRID2 : COLORS.GRID;
+
+    ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
 
     const time = performance.now() * 0.001;
@@ -1234,7 +1285,7 @@ function drawBackground() {
     const gridSize = 60;
     const perspectiveY = CONFIG.GROUND_Y;
 
-    ctx.strokeStyle = COLORS.GRID;
+    ctx.strokeStyle = gridColor;
     ctx.lineWidth = 1;
     ctx.globalAlpha = 0.2 + bgPulse * 0.1;
 
